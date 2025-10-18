@@ -1,46 +1,70 @@
 # action.yml
 # https://help.github.com/en/actions/building-actions/metadata-syntax-for-github-actions
-name: 'octodns-sync'
-description: 'Run octodns/octodns to deploy your DNS config to any cloud.'
+name: "octodns-sync"
+description: "Run octodns/octodns to deploy your DNS config to any cloud."
 inputs:
   add_pr_comment:
-    description: 'Add plan as a comment, when triggered by a pull request?'
+    description: "Add plan as a comment, when triggered by a pull request?"
     required: true
-    default: 'No'
+    default: "No"
   config_path:
-    description: 'Path, relative to your repository root, of the config file
-                  you would like octodns to use.'
+    description: "Path, relative to your repository root, of the config file
+      you would like octodns to use."
     required: true
-    default: 'public.yaml'
+    default: "public.yaml"
   doit:
     description: 'Really do it? Set "--doit" to do it; Any other string to
-                  not do it.'
+      not do it.'
     required: false
-    default: ''
+    default: ""
   force:
-    description: 'Run octodns-sync in force mode?'
+    description: "Run octodns-sync in force mode?"
     required: false
-    default: 'No'
+    default: "No"
   zones:
-    description: 'Space separated list of zones to sync, leave empty to sync
-                  all zones in the config file'
+    description: "Space separated list of zones to sync, leave empty to sync
+      all zones in the config file"
     required: false
-    default: ''
+    default: ""
   pr_comment_token:
-    description: 'Provide a token to use, if you set add_pr_comment to Yes.'
+    description: "Provide a token to use, if you set add_pr_comment to Yes."
     required: true
-    default: 'Not set'
+    default: "Not set"
 outputs:
   log:
-    description: '`octodns-sync` command output'
+    description: "`octodns-sync` command output"
     value: ${{ steps.run.outputs.log}}
   plan:
-    description: 'Planned changes, if configured in octodns'
+    description: "Planned changes, if configured in octodns"
     value: ${{ steps.run.outputs.plan}}
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Install requirements
+      shell: bash
+      run: |
+        cat > /tmp/requirements.txt << 'EOF'
+        certifi==2025.10.5
+        charset-normalizer==3.4.3
+        dnspython==2.8.0
+        fqdn==1.5.1
+        idna==3.10
+        natsort==8.4.0
+        octodns==1.13.0
+        octodns-cloudflare==1.0.0
+        python-dateutil==2.9.0.post0
+        PyYAML==6.0.3
+        requests==2.32.5
+        six==1.17.0
+        urllib3==2.5.0
+        EOF
+        pip install -r /tmp/requirements.txt
+
     - name: Run octodns-sync
       id: run
       env:
@@ -51,6 +75,7 @@ runs:
       run: ${GITHUB_ACTION_PATH}/scripts/run.sh
       shell: bash
       working-directory: ${{ github.workspace }}
+
     - name: Add pull request comment
       id: comment
       env:
@@ -60,6 +85,7 @@ runs:
       run: ${GITHUB_ACTION_PATH}/scripts/comment.sh
       shell: bash
       working-directory: ${{ github.workspace }}
+
 branding:
-  icon: 'list'
-  color: 'purple'
+  icon: "list"
+  color: "purple"
